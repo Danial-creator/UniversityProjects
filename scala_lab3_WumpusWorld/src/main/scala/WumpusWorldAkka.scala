@@ -1,5 +1,6 @@
 import Game._
 import akka.actor._
+
 import scala.util.Random
 
 object Game {
@@ -15,6 +16,8 @@ object Game {
   case object ArrowInside extends Room
 
   sealed trait GameState
+
+  case object GameOver extends GameState
 
   case class GameRunning(arrows: Int, room: Room) extends GameState {
     println("Arrows: " + arrows)
@@ -32,7 +35,6 @@ object Game {
     }
   }
 
-  case object GameOver extends GameState
 
   def checkRoom(game: GameRunning): GameState = game.room match {
     case Empty => game
@@ -48,12 +50,15 @@ class WumpusGame extends Actor {
 
   def state(room: Room, arrows: Int = 5): GameRunning = GameRunning(arrows, room)
 
-  for (x <- 0 until 4) {
-    val room = Random.shuffle(rooms.toList).head
-
-    def receive = {
-      case _ => checkRoom(state(room))
+  def shuffleMe {
+    for (x <- 0 until 4) {
+      val room = Random.shuffle(rooms.toList).head
+      checkRoom(state(room))
     }
+  }
+
+  override def receive: Receive = {
+    case _ => shuffleMe
   }
 }
 
